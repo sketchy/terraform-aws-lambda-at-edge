@@ -1,3 +1,8 @@
+provider "aws" {
+  alias      = "acm_provider"
+  region     = "us-east-1"
+}
+
 /**
  * Creates a Lambda@Edge function to integrate with CloudFront distributions.
  */
@@ -41,6 +46,7 @@ data "archive_file" "zip_file_for_lambda" {
  * appear that the function needs to be updated
  */
 resource "aws_s3_bucket_object" "artifact" {
+  provider = aws.acm_provider
   bucket = var.s3_artifact_bucket
   key    = "${var.name}.zip"
   source = data.archive_file.zip_file_for_lambda.output_path
@@ -48,16 +54,13 @@ resource "aws_s3_bucket_object" "artifact" {
   tags   = var.tags
 }
 
-provider "aws" {
-  alias      = "acm_provider"
-  region     = "us-east-1"
-}
+
 
 /**
  * Create the Lambda function. Each new apply will publish a new version.
  */
 resource "aws_lambda_function" "lambda" {
-  # provider         = aws.acm_provider
+  provider         = aws.acm_provider
   function_name = var.name
   description   = var.description
 
