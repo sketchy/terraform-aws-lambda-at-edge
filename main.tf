@@ -48,10 +48,16 @@ resource "aws_s3_bucket_object" "artifact" {
   tags   = var.tags
 }
 
+provider "aws" {
+  alias      = "acm_provider"
+  region     = "us-east-1"
+}
+
 /**
  * Create the Lambda function. Each new apply will publish a new version.
  */
 resource "aws_lambda_function" "lambda" {
+  provider         = aws.acm_provider
   function_name = var.name
   description   = var.description
 
