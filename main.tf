@@ -57,7 +57,7 @@ provider "aws" {
  * Create the Lambda function. Each new apply will publish a new version.
  */
 resource "aws_lambda_function" "lambda" {
-  provider         = aws.acm_provider
+  # provider         = aws.acm_provider
   function_name = var.name
   description   = var.description
 
