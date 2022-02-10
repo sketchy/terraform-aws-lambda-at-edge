@@ -141,7 +141,7 @@ resource "aws_lambda_function" "lambda" {
 
   depends_on = [
     aws_iam_role_policy_attachment.lambda_logs,
-    aws_cloudwatch_log_group.log_group,
+    # aws_cloudwatch_log_group.log_group,
   ]
 
   lifecycle {
