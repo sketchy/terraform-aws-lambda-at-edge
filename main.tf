@@ -107,6 +107,7 @@ data "aws_iam_policy_document" "assume_role_policy_doc" {
  * This policy also has permissions to write logs to CloudWatch.
  */
 resource "aws_iam_role" "lambda_at_edge" {
+  provider           = aws.acm_provider
   name               = "${var.name}-role"
   assume_role_policy = data.aws_iam_policy_document.assume_role_policy_doc.json
   tags               = var.tags
@@ -118,7 +119,7 @@ resource "aws_iam_role" "lambda_at_edge" {
 data "aws_iam_policy_document" "lambda_logs_policy_doc" {
   statement {
     effect    = "Allow"
-    resources = ["*"]
+    resources = ["arn:aws:logs:*:*:*"]
     actions = [
       "logs:CreateLogStream",
       "logs:PutLogEvents",
@@ -135,9 +136,10 @@ data "aws_iam_policy_document" "lambda_logs_policy_doc" {
  * Attach the policy giving log write access to the IAM Role
  */
 resource "aws_iam_role_policy" "logs_role_policy" {
-  name   = "${var.name}at-edge"
-  role   = aws_iam_role.lambda_at_edge.id
-  policy = data.aws_iam_policy_document.lambda_logs_policy_doc.json
+  provider      = aws.acm_provider
+  name          = "${var.name}at-edge"
+  role          = aws_iam_role.lambda_at_edge.id
+  policy        = data.aws_iam_policy_document.lambda_logs_policy_doc.json
 }
 
 /**
@@ -147,6 +149,7 @@ resource "aws_iam_role_policy" "logs_role_policy" {
  * of the CloudFront edge location handling the request.
  */
 resource "aws_cloudwatch_log_group" "log_group" {
+  provider      = aws.acm_provider
   name = "/aws/lambda/${var.name}"
   tags = var.tags
 }
@@ -155,6 +158,7 @@ resource "aws_cloudwatch_log_group" "log_group" {
  * Create the secret SSM parameters that can be fetched and decrypted by the lambda function.
  */
 resource "aws_ssm_parameter" "params" {
+  provider = aws.acm_provider
   for_each = var.ssm_params
 
   description = "param ${each.key} for the lambda function ${var.name}"
@@ -192,6 +196,7 @@ data "aws_iam_policy_document" "secret_access_policy_doc" {
  * Create a policy from the SSM policy document
  */
 resource "aws_iam_policy" "ssm_policy" {
+  provider = aws.acm_provider
   count = length(var.ssm_params) > 0 ? 1 : 0
 
   name        = "${var.name}-ssm-policy"
@@ -203,7 +208,8 @@ resource "aws_iam_policy" "ssm_policy" {
  * Attach the policy giving SSM param access to the Lambda IAM Role
  */
 resource "aws_iam_role_policy_attachment" "ssm_policy_attachment" {
-  count = length(var.ssm_params) > 0 ? 1 : 0
+  provider   = aws.acm_provider
+  count      = length(var.ssm_params) > 0 ? 1 : 0
 
   role       = aws_iam_role.lambda_at_edge.id
   policy_arn = aws_iam_policy.ssm_policy[0].arn
