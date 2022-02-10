@@ -47,20 +47,18 @@ data "archive_file" "zip_file_for_lambda" {
  */
 resource "aws_s3_bucket_object" "artifact" {
   provider = aws.acm_provider
-  bucket = var.s3_artifact_bucket
-  key    = "${var.name}.zip"
-  source = data.archive_file.zip_file_for_lambda.output_path
-  etag   = data.archive_file.zip_file_for_lambda.output_md5
-  tags   = var.tags
+  bucket   = var.s3_artifact_bucket
+  key      = "${var.name}.zip"
+  source   = data.archive_file.zip_file_for_lambda.output_path
+  etag     = data.archive_file.zip_file_for_lambda.output_md5
+  tags     = var.tags
 }
-
-
 
 /**
  * Create the Lambda function. Each new apply will publish a new version.
  */
 resource "aws_lambda_function" "lambda" {
-  provider         = aws.acm_provider
+  provider      = aws.acm_provider
   function_name = var.name
   description   = var.description
 
@@ -73,7 +71,7 @@ resource "aws_lambda_function" "lambda" {
   publish = true
   handler = var.handler
   runtime = var.runtime
-  role    = data.aws_iam_role.lambda_at_edge.arn
+  role    = aws_iam_role.lambda_at_edge.arn
   tags    = var.tags
 
   lifecycle {
@@ -108,13 +106,10 @@ data "aws_iam_policy_document" "assume_role_policy_doc" {
  * Make a role that AWS services can assume that gives them access to invoke our function.
  * This policy also has permissions to write logs to CloudWatch.
  */
-# resource "aws_iam_role" "lambda_at_edge" {
-#   name               = "${var.name}-role"
-#   assume_role_policy = data.aws_iam_policy_document.assume_role_policy_doc.json
-#   tags               = var.tags
-# }
-data "aws_iam_role" "lambda_at_edge" {
-  name = "lambda-edge-role"
+resource "aws_iam_role" "lambda_at_edge" {
+  name               = "${var.name}-role"
+  assume_role_policy = data.aws_iam_policy_document.assume_role_policy_doc.json
+  tags               = var.tags
 }
 
 /**
@@ -141,7 +136,7 @@ data "aws_iam_policy_document" "lambda_logs_policy_doc" {
  */
 resource "aws_iam_role_policy" "logs_role_policy" {
   name   = "${var.name}at-edge"
-  role   = data.aws_iam_role.lambda_at_edge.id
+  role   = aws_iam_role.lambda_at_edge.id
   policy = data.aws_iam_policy_document.lambda_logs_policy_doc.json
 }
 
@@ -210,6 +205,6 @@ resource "aws_iam_policy" "ssm_policy" {
 resource "aws_iam_role_policy_attachment" "ssm_policy_attachment" {
   count = length(var.ssm_params) > 0 ? 1 : 0
 
-  role       = data.aws_iam_role.lambda_at_edge.id
+  role       = aws_iam_role.lambda_at_edge.id
   policy_arn = aws_iam_policy.ssm_policy[0].arn
 }
