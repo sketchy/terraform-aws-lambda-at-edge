@@ -54,71 +54,8 @@ resource "aws_s3_bucket_object" "artifact" {
   tags   = var.tags
 }
 
-resource "aws_iam_role" "lambda_role" {
 
-  assume_role_policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Action": "sts:AssumeRole",
-      "Principal": {
-        "Service": [
-            "lambda.amazonaws.com",
-            "edgelambda.amazonaws.com"
-        ]
-      },
-      "Effect": "Allow",
-      "Sid": ""
-    }
-  ]
-}
-EOF
 
-}
-
-/**
- * Creates a Cloudwatch log group for this function to log to.
- * With lambda@edge, only test runs will log to this group. All
- * logs in production will be logged to a log group in the region
- * of the CloudFront edge location handling the request.
- */
-resource "aws_cloudwatch_log_group" "log_group" {
-  name = "/aws/lambda/${var.name}"
-  tags = var.tags
-  retention_in_days = 14
-}
-
-/**
- * Attach the policy giving log write access to the IAM Role
- */
-resource "aws_iam_policy" "lambda_logging" {
-  name = "lambda_logging"
-  path = "/"
-  description = "IAM policy for logging from a lambda"
-
-  policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Action": [
-        "logs:CreateLogGroup",
-        "logs:CreateLogStream",
-        "logs:PutLogEvents"
-      ],
-      "Resource": "arn:aws:logs:*:*:*",
-      "Effect": "Allow"
-    }
-  ]
-}
-EOF
-}
-
-resource "aws_iam_role_policy_attachment" "lambda_logs" {
-  role       = aws_iam_role.lambda_role.name
-  policy_arn = aws_iam_policy.lambda_logging.arn
-}
 /**
  * Create the Lambda function. Each new apply will publish a new version.
  */
@@ -136,13 +73,8 @@ resource "aws_lambda_function" "lambda" {
   publish = true
   handler = var.handler
   runtime = var.runtime
-  role    = aws_iam_role.lambda_role.name
+  role    = aws_iam_role.lambda_at_edge.arn
   tags    = var.tags
-
-  depends_on = [
-    aws_iam_role_policy_attachment.lambda_logs,
-    # aws_cloudwatch_log_group.log_group,
-  ]
 
   lifecycle {
     ignore_changes = [
@@ -154,58 +86,72 @@ resource "aws_lambda_function" "lambda" {
 /**
  * Policy to allow AWS to access this lambda function.
  */
-# data "aws_iam_policy_document" "assume_role_policy_doc" {
-#   statement {
-#     sid    = "AllowAwsToAssumeRole"
-#     effect = "Allow"
+data "aws_iam_policy_document" "assume_role_policy_doc" {
+  statement {
+    sid    = "AllowAwsToAssumeRole"
+    effect = "Allow"
 
-#     actions = ["sts:AssumeRole"]
+    actions = ["sts:AssumeRole"]
 
-#     principals {
-#       type = "Service"
+    principals {
+      type = "Service"
 
-#       identifiers = [
-#         "edgelambda.amazonaws.com",
-#         "lambda.amazonaws.com",
-#       ]
-#     }
-#   }
-# }
+      identifiers = [
+        "edgelambda.amazonaws.com",
+        "lambda.amazonaws.com",
+      ]
+    }
+  }
+}
 
 /**
  * Make a role that AWS services can assume that gives them access to invoke our function.
  * This policy also has permissions to write logs to CloudWatch.
  */
- 
-
-
-
-
-# resource "aws_iam_role" "lambda_at_edge" {
-#   name               = "${var.name}-role"
-#   assume_role_policy = data.aws_iam_policy_document.assume_role_policy_doc.json
-#   tags               = var.tags
-# }
+resource "aws_iam_role" "lambda_at_edge" {
+  name               = "${var.name}-role"
+  assume_role_policy = data.aws_iam_policy_document.assume_role_policy_doc.json
+  tags               = var.tags
+}
 
 /**
  * Allow lambda to write logs.
  */
-# data "aws_iam_policy_document" "lambda_logs_policy_doc" {
-#   statement {
-#     effect    = "Allow"
-#     resources = ["*"]
-#     actions = [
-#       "logs:CreateLogStream",
-#       "logs:PutLogEvents",
+data "aws_iam_policy_document" "lambda_logs_policy_doc" {
+  statement {
+    effect    = "Allow"
+    resources = ["*"]
+    actions = [
+      "logs:CreateLogStream",
+      "logs:PutLogEvents",
 
-#       # Lambda@Edge logs are logged into Log Groups in the region of the edge location
-#       # that executes the code. Because of this, we need to allow the lambda role to create
-#       # Log Groups in other regions
-#       "logs:CreateLogGroup",
-#     ]
-#   }
-# }
+      # Lambda@Edge logs are logged into Log Groups in the region of the edge location
+      # that executes the code. Because of this, we need to allow the lambda role to create
+      # Log Groups in other regions
+      "logs:CreateLogGroup",
+    ]
+  }
+}
 
+/**
+ * Attach the policy giving log write access to the IAM Role
+ */
+resource "aws_iam_role_policy" "logs_role_policy" {
+  name   = "${var.name}at-edge"
+  role   = aws_iam_role.lambda_at_edge.id
+  policy = data.aws_iam_policy_document.lambda_logs_policy_doc.json
+}
+
+/**
+ * Creates a Cloudwatch log group for this function to log to.
+ * With lambda@edge, only test runs will log to this group. All
+ * logs in production will be logged to a log group in the region
+ * of the CloudFront edge location handling the request.
+ */
+resource "aws_cloudwatch_log_group" "log_group" {
+  name = "/aws/lambda/${var.name}"
+  tags = var.tags
+}
 
 /**
  * Create the secret SSM parameters that can be fetched and decrypted by the lambda function.
@@ -261,6 +207,6 @@ resource "aws_iam_policy" "ssm_policy" {
 resource "aws_iam_role_policy_attachment" "ssm_policy_attachment" {
   count = length(var.ssm_params) > 0 ? 1 : 0
 
-  role       = aws_iam_role.lambda_role.id
+  role       = aws_iam_role.lambda_at_edge.id
   policy_arn = aws_iam_policy.ssm_policy[0].arn
 }
