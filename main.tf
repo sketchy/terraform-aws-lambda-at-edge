@@ -125,7 +125,7 @@ resource "aws_iam_role" "lambda_at_edge" {
 data "aws_iam_policy_document" "lambda_logs_policy_doc" {
   statement {
     effect    = "Allow"
-    resources = [""]
+    resources = ["*"]
     actions = [
       "logs:CreateLogStream",
       "logs:PutLogEvents",
