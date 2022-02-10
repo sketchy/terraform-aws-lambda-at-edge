@@ -261,6 +261,6 @@ resource "aws_iam_policy" "ssm_policy" {
 resource "aws_iam_role_policy_attachment" "ssm_policy_attachment" {
   count = length(var.ssm_params) > 0 ? 1 : 0
 
-  role       = aws_iam_role.lambda_at_edge.id
+  role       = aws_iam_role.lambda_role.id
   policy_arn = aws_iam_policy.ssm_policy[0].arn
 }
