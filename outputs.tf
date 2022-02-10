@@ -11,9 +11,9 @@ output "function_name" {
 }
 
 output execution_role_name {
-  value = aws_iam_role.lambda_at_edge.name
+  value = data.aws_iam_role.lambda_at_edge.name
 }
 
 output execution_role_arn {
-  value = aws_iam_role.lambda_at_edge.arn
+  value = data.aws_iam_role.lambda_at_edge.arn
 }
