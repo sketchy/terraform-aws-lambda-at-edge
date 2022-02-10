@@ -76,6 +76,11 @@ resource "aws_lambda_function" "lambda" {
   role    = aws_iam_role.lambda_at_edge.arn
   tags    = var.tags
 
+  depends_on = [
+    aws_iam_role_policy_attachment.lambda_logs,
+    aws_cloudwatch_log_group.log_group,
+  ]
+
   lifecycle {
     ignore_changes = [
       last_modified,
@@ -120,7 +125,7 @@ resource "aws_iam_role" "lambda_at_edge" {
 data "aws_iam_policy_document" "lambda_logs_policy_doc" {
   statement {
     effect    = "Allow"
-    resources = ["*"]
+    resources = [""]
     actions = [
       "logs:CreateLogStream",
       "logs:PutLogEvents",
@@ -151,6 +156,35 @@ resource "aws_iam_role_policy" "logs_role_policy" {
 resource "aws_cloudwatch_log_group" "log_group" {
   name = "/aws/lambda/${var.name}"
   tags = var.tags
+  retention_in_days = 14
+}
+
+resource "aws_iam_policy" "lambda_logging" {
+  name        = "lambda_logging"
+  path        = "/"
+  description = "IAM policy for logging from a lambda"
+
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ],
+      "Resource": "arn:aws:logs:*:*:*",
+      "Effect": "Allow"
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_logs" {
+  role       = aws_iam_role.lambda_at_edge.id
+  policy_arn = aws_iam_policy.lambda_logging.arn
 }
 
 /**
