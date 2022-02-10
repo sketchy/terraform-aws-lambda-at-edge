@@ -150,7 +150,7 @@ resource "aws_iam_role_policy" "logs_role_policy" {
  */
 resource "aws_cloudwatch_log_group" "log_group" {
   provider      = aws.acm_provider
-  name = "/aws/lambda/${var.name}"
+  name = "cognito-lambda-${var.name}"
   tags = var.tags
 }
 
