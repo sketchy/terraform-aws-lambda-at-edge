@@ -73,7 +73,7 @@ resource "aws_lambda_function" "lambda" {
   publish = true
   handler = var.handler
   runtime = var.runtime
-  role    = aws_iam_role.lambda_at_edge.arn
+  role    = data.aws_iam_role.lambda_at_edge.arn
   tags    = var.tags
 
   lifecycle {
@@ -108,10 +108,13 @@ data "aws_iam_policy_document" "assume_role_policy_doc" {
  * Make a role that AWS services can assume that gives them access to invoke our function.
  * This policy also has permissions to write logs to CloudWatch.
  */
-resource "aws_iam_role" "lambda_at_edge" {
-  name               = "${var.name}-role"
-  assume_role_policy = data.aws_iam_policy_document.assume_role_policy_doc.json
-  tags               = var.tags
+# resource "aws_iam_role" "lambda_at_edge" {
+#   name               = "${var.name}-role"
+#   assume_role_policy = data.aws_iam_policy_document.assume_role_policy_doc.json
+#   tags               = var.tags
+# }
+data "aws_iam_role" "lambda_at_edge" {
+  name = "lambda-edge-role"
 }
 
 /**
@@ -138,7 +141,7 @@ data "aws_iam_policy_document" "lambda_logs_policy_doc" {
  */
 resource "aws_iam_role_policy" "logs_role_policy" {
   name   = "${var.name}at-edge"
-  role   = aws_iam_role.lambda_at_edge.id
+  role   = data.aws_iam_role.lambda_at_edge.id
   policy = data.aws_iam_policy_document.lambda_logs_policy_doc.json
 }
 
@@ -207,6 +210,6 @@ resource "aws_iam_policy" "ssm_policy" {
 resource "aws_iam_role_policy_attachment" "ssm_policy_attachment" {
   count = length(var.ssm_params) > 0 ? 1 : 0
 
-  role       = aws_iam_role.lambda_at_edge.id
+  role       = data.aws_iam_role.lambda_at_edge.id
   policy_arn = aws_iam_policy.ssm_policy[0].arn
 }
