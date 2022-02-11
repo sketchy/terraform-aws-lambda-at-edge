@@ -126,7 +126,7 @@ data "aws_iam_policy_document" "lambda_logs_policy_doc" {
       # Lambda@Edge logs are logged into Log Groups in the region of the edge location
       # that executes the code. Because of this, we need to allow the lambda role to create
       # Log Groups in other regions
-      # "logs:CreateLogGroup",
+      "logs:CreateLogGroup",
     ]
   }
 }
