@@ -154,57 +154,57 @@ resource "aws_cloudwatch_log_group" "log_group" {
 /**
  * Create the secret SSM parameters that can be fetched and decrypted by the lambda function.
  */
-resource "aws_ssm_parameter" "params" {
-  for_each = var.ssm_params
+# resource "aws_ssm_parameter" "params" {
+#   for_each = var.ssm_params
 
-  description = "param ${each.key} for the lambda function ${var.name}"
+#   description = "param ${each.key} for the lambda function ${var.name}"
 
-  name  = each.key
-  value = each.value
+#   name  = each.key
+#   value = each.value
 
-  type = "SecureString"
-  tier = length(each.value) > 4096 ? "Advanced" : "Standard"
+#   type = "SecureString"
+#   tier = length(each.value) > 4096 ? "Advanced" : "Standard"
 
-  tags = var.tags
-}
+#   tags = var.tags
+# }
 
 /**
  * Create an IAM policy document giving access to read and fetch the SSM params
  */
-data "aws_iam_policy_document" "secret_access_policy_doc" {
-  count = length(var.ssm_params) > 0 ? 1 : 0
+# data "aws_iam_policy_document" "secret_access_policy_doc" {
+#   count = length(var.ssm_params) > 0 ? 1 : 0
 
-  statement {
-    sid    = "AccessParams"
-    effect = "Allow"
-    actions = [
-      "ssm:GetParameter",
-      "secretsmanager:GetSecretValue",
-    ]
-    resources = [
-      for name, outputs in aws_ssm_parameter.params :
-      outputs.arn
-    ]
-  }
-}
+#   statement {
+#     sid    = "AccessParams"
+#     effect = "Allow"
+#     actions = [
+#       "ssm:GetParameter",
+#       "secretsmanager:GetSecretValue",
+#     ]
+#     resources = [
+#       for name, outputs in aws_ssm_parameter.params :
+#       outputs.arn
+#     ]
+#   }
+# }
 
 /**
  * Create a policy from the SSM policy document
  */
-resource "aws_iam_policy" "ssm_policy" {
-  count = length(var.ssm_params) > 0 ? 1 : 0
+# resource "aws_iam_policy" "ssm_policy" {
+#   count = length(var.ssm_params) > 0 ? 1 : 0
 
-  name        = "${var.name}-ssm-policy"
-  description = "Gives the lambda ${var.name} access to params from SSM"
-  policy      = data.aws_iam_policy_document.secret_access_policy_doc[0].json
-}
+#   name        = "${var.name}-ssm-policy"
+#   description = "Gives the lambda ${var.name} access to params from SSM"
+#   policy      = data.aws_iam_policy_document.secret_access_policy_doc[0].json
+# }
 
 /**
  * Attach the policy giving SSM param access to the Lambda IAM Role
  */
-resource "aws_iam_role_policy_attachment" "ssm_policy_attachment" {
-  count      = length(var.ssm_params) > 0 ? 1 : 0
+# resource "aws_iam_role_policy_attachment" "ssm_policy_attachment" {
+#   count      = length(var.ssm_params) > 0 ? 1 : 0
 
-  role       = aws_iam_role.lambda_at_edge.id
-  policy_arn = aws_iam_policy.ssm_policy[0].arn
-}
+#   role       = aws_iam_role.lambda_at_edge.id
+#   policy_arn = aws_iam_policy.ssm_policy[0].arn
+# }
