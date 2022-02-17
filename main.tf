@@ -1,6 +1,6 @@
 provider "aws" {
-  alias      = "acm_provider"
-  region     = "us-east-1"
+  alias  = "acm_provider"
+  region = "us-east-1"
 }
 
 /**
@@ -135,9 +135,9 @@ data "aws_iam_policy_document" "lambda_logs_policy_doc" {
  * Attach the policy giving log write access to the IAM Role
  */
 resource "aws_iam_role_policy" "logs_role_policy" {
-  name          = "${var.name}at-edge"
-  role          = aws_iam_role.lambda_at_edge.id
-  policy        = data.aws_iam_policy_document.lambda_logs_policy_doc.json
+  name   = "${var.name}at-edge"
+  role   = aws_iam_role.lambda_at_edge.id
+  policy = data.aws_iam_policy_document.lambda_logs_policy_doc.json
 }
 
 /**
@@ -147,7 +147,7 @@ resource "aws_iam_role_policy" "logs_role_policy" {
  * of the CloudFront edge location handling the request.
  */
 resource "aws_cloudwatch_log_group" "log_group" {
-  name = "${var.name}"
+  name = var.name
   tags = var.tags
 }
 
