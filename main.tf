@@ -13,7 +13,7 @@ provider "aws" {
  */
 data "archive_file" "zip_file_for_lambda" {
   type        = "zip"
-  output_path = "${path.module}/${var.local_file_dir}/${var.name}.zip"
+  output_path = "${var.local_file_dir}/${var.name}.zip"
 
   dynamic "source" {
     for_each = distinct(flatten([
@@ -36,6 +36,12 @@ data "archive_file" "zip_file_for_lambda" {
       content  = jsonencode(var.plaintext_params)
       filename = var.config_file_name
     }
+  }
+}
+
+resource "null_resource" "a" {
+  triggers = {
+    hash = filebase64sha256(data.archive_file.zip_file_for_lambda.output_path),
   }
 }
 
