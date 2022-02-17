@@ -79,6 +79,11 @@ resource "aws_lambda_function" "lambda" {
       last_modified,
     ]
   }
+
+  depends_on = [
+    archive_file.zip_file_for_lambda,
+    aws_cloudwatch_log_group.aws_cloudwatch_log_group,
+  ]
 }
 
 /**
