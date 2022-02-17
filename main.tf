@@ -49,8 +49,8 @@ resource "aws_s3_bucket_object" "artifact" {
   provider = aws.acm_provider
   bucket   = var.s3_artifact_bucket
   key      = "${var.name}.zip"
-  source   = data.archive_file.zip_file_for_lambda.output_path
-  etag     = data.archive_file.zip_file_for_lambda.output_md5
+  source   = data.archive_file.zip_file_for_lambda.default.output_path
+  etag     = data.archive_file.zip_file_for_lambda.default.output_md5
   tags     = var.tags
 }
 
@@ -66,7 +66,7 @@ resource "aws_lambda_function" "lambda" {
   s3_bucket         = var.s3_artifact_bucket
   s3_key            = aws_s3_bucket_object.artifact.id
   s3_object_version = aws_s3_bucket_object.artifact.version_id
-  source_code_hash  = filebase64sha256(data.archive_file.zip_file_for_lambda.output_path)
+  source_code_hash  = filebase64sha256(data.archive_file.zip_file_for_lambda.default.output_path)
 
   publish = true
   handler = var.handler
