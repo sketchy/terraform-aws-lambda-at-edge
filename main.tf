@@ -13,7 +13,7 @@ provider "aws" {
  */
 data "archive_file" "zip_file_for_lambda" {
   type        = "zip"
-  output_path = "${path.module}/${var.local_file_dir}/${var.name}.zip"
+  output_path = "${var.local_file_dir}/${var.name}.zip"
 
   dynamic "source" {
     for_each = distinct(flatten([
@@ -22,8 +22,8 @@ data "archive_file" "zip_file_for_lambda" {
     ]))
     content {
       content = try(
-        file("${path.module}/../${var.lambda_code_source_dir}/${source.value}"),
-        filebase64("${path.module}/../${var.lambda_code_source_dir}/${source.value}"),
+        file("${var.lambda_code_source_dir}/${source.value}"),
+        filebase64("${var.lambda_code_source_dir}/${source.value}"),
       )
       filename = source.value
     }
@@ -83,7 +83,7 @@ resource "aws_lambda_function" "lambda" {
   depends_on = [
     aws_s3_bucket_object.artifact,
     aws_cloudwatch_log_group.log_group,
-    aws_iam_role.lambda_at_edge,
+    aws_iam_role.lambda_at_edge
   ]
 }
 
