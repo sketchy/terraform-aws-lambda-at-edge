@@ -83,6 +83,7 @@ resource "aws_lambda_function" "lambda" {
   depends_on = [
     aws_s3_bucket_object.artifact,
     aws_cloudwatch_log_group.log_group,
+    aws_iam_role.lambda_at_edge,
   ]
 }
 
