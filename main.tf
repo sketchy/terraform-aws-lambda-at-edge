@@ -39,10 +39,18 @@ data "archive_file" "zip_file_for_lambda" {
   }
 }
 
-resource "null_resource" "a" {
-  triggers = {
-    hash = filebase64sha256(data.archive_file.zip_file_for_lambda.output_path),
-  }
+/**
+ * Upload the build artifact zip file to S3.
+ *
+ * Doing this makes the plans more resiliant, where it won't always
+ * appear that the function needs to be updated
+ */
+resource "aws_s3_bucket_object" "artifact" {
+  bucket = var.s3_artifact_bucket
+  key    = "${var.name}.zip"
+  source = data.archive_file.zip_file_for_lambda.output_path
+  etag   = data.archive_file.zip_file_for_lambda.output_md5
+  tags   = var.tags
 }
 
 /**
@@ -51,14 +59,6 @@ resource "null_resource" "a" {
  * Doing this makes the plans more resiliant, where it won't always
  * appear that the function needs to be updated
  */
-resource "aws_s3_bucket_object" "artifact" {
-  provider = aws.acm_provider
-  bucket   = var.s3_artifact_bucket
-  key      = "${var.name}.zip"
-  source   = data.archive_file.zip_file_for_lambda.output_path
-  etag     = data.archive_file.zip_file_for_lambda.output_md5
-  tags     = var.tags
-}
 
 /**
  * Create the Lambda function. Each new apply will publish a new version.
