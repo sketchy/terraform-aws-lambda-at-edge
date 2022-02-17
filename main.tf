@@ -147,7 +147,7 @@ resource "aws_iam_role_policy" "logs_role_policy" {
  * of the CloudFront edge location handling the request.
  */
 resource "aws_cloudwatch_log_group" "log_group" {
-  name = var.name
+  name = "/aws/lambda/${var.name}"
   tags = var.tags
 }
 
