@@ -81,7 +81,7 @@ resource "aws_lambda_function" "lambda" {
   }
 
   depends_on = [
-    data.archive_file.zip_file_for_lambda,
+    aws_s3_bucket_object.artifact,
     aws_cloudwatch_log_group.log_group,
   ]
 }
