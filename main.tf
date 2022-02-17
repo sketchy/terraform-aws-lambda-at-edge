@@ -46,11 +46,12 @@ data "archive_file" "zip_file_for_lambda" {
  * appear that the function needs to be updated
  */
 resource "aws_s3_bucket_object" "artifact" {
-  bucket = var.s3_artifact_bucket
-  key    = "${var.name}.zip"
-  source = data.archive_file.zip_file_for_lambda.output_path
-  etag   = data.archive_file.zip_file_for_lambda.output_md5
-  tags   = var.tags
+  provider = aws.acm_provider
+  bucket   = var.s3_artifact_bucket
+  key      = "${var.name}.zip"
+  source   = data.archive_file.zip_file_for_lambda.output_path
+  etag     = data.archive_file.zip_file_for_lambda.output_md5
+  tags     = var.tags
 }
 
 /**
