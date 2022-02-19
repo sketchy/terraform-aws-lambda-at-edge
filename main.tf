@@ -38,6 +38,15 @@ data "archive_file" "zip_file_for_lambda" {
       filename = var.config_file_name
     }
   }
+
+  depends_on = [
+    random_string.r
+  ]
+}
+
+resource "random_string" "r" {
+  length  = 16
+  special = false
 }
 
 /**
