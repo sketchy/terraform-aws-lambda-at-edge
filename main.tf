@@ -14,7 +14,7 @@ provider "aws" {
 data "archive_file" "zip_file_for_lambda" {
   type             = "zip"
   output_file_mode = "0666"
-  output_path      = "${var.local_file_dir}/${var.name}.zip"
+  output_path      = "${var.local_file_dir}/${var.name}-${random_string.r.result}.zip"
 
   dynamic "source" {
     for_each = distinct(flatten([
@@ -40,15 +40,13 @@ data "archive_file" "zip_file_for_lambda" {
   }
 
   depends_on = [
-    # Make sure archive is created in apply stage
-    null_resource.dummy_trigger
+    random_string.r
   ]
 }
 
-resource "null_resource" "dummy_trigger" {
-  triggers = {
-    timestamp = timestamp()
-  }
+resource "random_string" "r" {
+  length  = 16
+  special = false
 }
 
 /**
