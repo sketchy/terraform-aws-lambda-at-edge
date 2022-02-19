@@ -16,7 +16,7 @@ data "archive_file" "zip_file_for_lambda" {
   output_file_mode = "0666"
   output_path      = "${var.local_file_dir}/${var.name}.zip"
 
-  "source" {
+  source {
     for_each = distinct(flatten([
       for blob in var.file_globs :
       fileset(var.lambda_code_source_dir, blob)
@@ -31,7 +31,7 @@ data "archive_file" "zip_file_for_lambda" {
   }
 
   # Optionally write a `config.json` file if any plaintext params were given
-  "source" {
+  source {
     for_each = length(keys(var.plaintext_params)) > 0 ? ["true"] : []
     content {
       content  = jsonencode(var.plaintext_params)
