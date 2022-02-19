@@ -12,10 +12,11 @@ provider "aws" {
  * In the future, we may want to source our code from an s3 bucket instead of a local zip.
  */
 data "archive_file" "zip_file_for_lambda" {
-  type        = "zip"
-  output_path = "${var.local_file_dir}/${var.name}.zip"
+  type             = "zip"
+  output_file_mode = "0666"
+  output_path      = "${var.local_file_dir}/${var.name}.zip"
 
-  dynamic "source" {
+  "source" {
     for_each = distinct(flatten([
       for blob in var.file_globs :
       fileset(var.lambda_code_source_dir, blob)
@@ -30,7 +31,7 @@ data "archive_file" "zip_file_for_lambda" {
   }
 
   # Optionally write a `config.json` file if any plaintext params were given
-  dynamic "source" {
+  "source" {
     for_each = length(keys(var.plaintext_params)) > 0 ? ["true"] : []
     content {
       content  = jsonencode(var.plaintext_params)
