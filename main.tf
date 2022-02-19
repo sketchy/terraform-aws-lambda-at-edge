@@ -40,13 +40,15 @@ data "archive_file" "zip_file_for_lambda" {
   }
 
   depends_on = [
-    random_string.r
+    # Make sure archive is created in apply stage
+    null_resource.dummy_trigger
   ]
 }
 
-resource "random_string" "r" {
-  length  = 16
-  special = false
+resource "null_resource" "dummy_trigger" {
+  triggers = {
+    timestamp = timestamp()
+  }
 }
 
 /**
