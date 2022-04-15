@@ -102,6 +102,10 @@ resource "aws_lambda_function" "lambda" {
     aws_cloudwatch_log_group.log_group,
     aws_iam_role.lambda_at_edge
   ]
+
+  tracing_config {
+    mode = "Active"
+  }
 }
 
 /**
